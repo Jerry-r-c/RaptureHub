@@ -4,7 +4,7 @@ local tweeninfo = TweenInfo.new
 local HiddenCore = cloneref(game.CoreGui)
 local input = game:GetService("UserInputService")
 local run = game:GetService("RunService")
---fuck you shitty devs trying to use the gui to detect vezt lmao + fuck you xHeptc for not using common sense to secure your services might switch to my own gui soon anyways
+-- e
 local funnyCoreGui = gethui and gethui() or HiddenCore
 local Utility = {}
 local Objects = {}
