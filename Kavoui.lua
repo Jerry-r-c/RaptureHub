@@ -1,45 +1,61 @@
 local Kavo = {}
+
 local tween = game:GetService("TweenService")
 local tweeninfo = TweenInfo.new
-local HiddenCore = cloneref(game.CoreGui)
 local input = game:GetService("UserInputService")
 local run = game:GetService("RunService")
--- e
-local funnyCoreGui = gethui and gethui() or HiddenCore
+
 local Utility = {}
 local Objects = {}
 function Kavo:DraggingEnabled(frame, parent)
-        
     parent = parent or frame
     
-    -- stolen from wally or kiriot, kek
     local dragging = false
-    local dragInput, mousePos, framePos
+    local dragInput, touchInput, inputPos, framePos
+    local inputService = game:GetService("UserInputService")
 
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            mousePos = input.Position
-            framePos = parent.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
+    local function startDrag(input)
+        dragging = true
+        inputPos = input.Position
+        framePos = parent.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
 
-    frame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+    local function updateDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or 
+           input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
+    end
+
+    -- Handle both mouse and touch input for starting drag
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            startDrag(input)
+        end
     end)
 
-    input.InputChanged:Connect(function(input)
+    -- Handle movement updates
+    frame.InputChanged:Connect(function(input)
+        updateDrag(input)
+    end)
+
+    -- Update position while dragging
+    inputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
-            local delta = input.Position - mousePos
-            parent.Position  = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+            local delta = input.Position - inputPos
+            parent.Position = UDim2.new(
+                framePos.X.Scale, 
+                framePos.X.Offset + delta.X, 
+                framePos.Y.Scale, 
+                framePos.Y.Offset + delta.Y
+            )
         end
     end)
 end
@@ -58,7 +74,7 @@ local themes = {
 }
 local themeStyles = {
     DarkTheme = {
-        SchemeColor = Color3.fromRGB(255, 140, 0),
+        SchemeColor = Color3.fromRGB(64, 64, 64),
         Background = Color3.fromRGB(0, 0, 0),
         Header = Color3.fromRGB(0, 0, 0),
         TextColor = Color3.fromRGB(255,255,255),
@@ -119,27 +135,6 @@ local themeStyles = {
         Header = Color3.fromRGB(22, 29, 31),
         TextColor = Color3.fromRGB(255,255,255),
         ElementColor = Color3.fromRGB(22, 29, 31)
-    },
-    VeztPur = {
-        SchemeColor = Color3.fromRGB(126, 6, 232),
-        Background = Color3.fromRGB(0, 0, 0),
-        Header = Color3.fromRGB(31, 31, 31),
-        TextColor = Color3.fromRGB(255,255,255),
-        ElementColor = Color3.fromRGB(31, 31, 31)
-    },
-    VeztTwi = {
-        SchemeColor = Color3.fromRGB(192, 192, 192),
-        Background = Color3.fromRGB(0, 0, 0),
-        Header = Color3.fromRGB(43, 85, 140),
-        TextColor = Color3.fromRGB(255,255,255),
-        ElementColor = Color3.fromRGB(31, 31, 31)
-    },
-    Vezt = {
-        SchemeColor = Color3.fromRGB(255, 140, 0),
-        Background = Color3.fromRGB(0, 0, 0),
-        Header = Color3.fromRGB(0, 0, 0),
-        TextColor = Color3.fromRGB(255,255,255),
-        ElementColor = Color3.fromRGB(20, 20, 20)
     }
 }
 local oldTheme = ""
@@ -149,12 +144,7 @@ local SettingsT = {
 }
 
 local Name = "KavoConfig.JSON"
-if not isfile("KavoConfig.JSON") then
-   writefile(Name, "{}") 
-end
-if game.PlaceId == 12101311141 then
-	game.Players.LocalPlayer:Kick("stop")
-end
+
 pcall(function()
 
 if not pcall(function() readfile(Name) end) then
@@ -167,10 +157,10 @@ end)
 local LibName = tostring(math.random(1, 100))..tostring(math.random(1,50))..tostring(math.random(1, 100))
 
 function Kavo:ToggleUI()
-    if funnyCoreGui[LibName].Enabled then
-        funnyCoreGui[LibName].Enabled = false
+    if game.CoreGui[LibName].Enabled then
+        game.CoreGui[LibName].Enabled = false
     else
-        funnyCoreGui[LibName].Enabled = true
+        game.CoreGui[LibName].Enabled = true
     end
 end
 
@@ -196,12 +186,6 @@ function Kavo.CreateLib(kavName, themeList)
         themeList = themeStyles.Synapse
     elseif themeList == "Serpent" then
         themeList = themeStyles.Serpent
-    elseif themeList == "Vezt" then
-            themeList = themeStyles.Vezt
-    elseif themeList == "VeztPur" then
-            themeList = themeStyles.VeztPur
-    elseif themeList == "VeztTwi" then
-            themeList = themeStyles.VeztTwi
     else
         if themeList.SchemeColor == nil then
             themeList.SchemeColor = Color3.fromRGB(74, 99, 135)
@@ -220,7 +204,7 @@ function Kavo.CreateLib(kavName, themeList)
     local selectedTab 
     kavName = kavName or "Library"
     table.insert(Kavo, kavName)
-    for i,v in pairs(funnyCoreGui:GetChildren()) do
+    for i,v in pairs(game.CoreGui:GetChildren()) do
         if v:IsA("ScreenGui") and v.Name == kavName then
             v:Destroy()
         end
@@ -255,13 +239,12 @@ function Kavo.CreateLib(kavName, themeList)
     blurFrame.Size = UDim2.new(0, 376, 0, 289)
     blurFrame.ZIndex = 999
 
-    ScreenGui.Parent = funnyCoreGui
+    ScreenGui.Parent = game.CoreGui
     ScreenGui.Name = LibName
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
 
     Main.Name = "Main"
-    Main.Active = true
     Main.Parent = ScreenGui
     Main.BackgroundColor3 = themeList.Background
     Main.ClipsDescendants = true
@@ -1231,8 +1214,11 @@ function Kavo.CreateLib(kavName, themeList)
                             viewDe = false
                         end
                     end)
-                    function TogFunction:UpdateToggle(isTogOn)
+                    function TogFunction:UpdateToggle(newText, isTogOn)
                         isTogOn = isTogOn or toggle
+                        if newText ~= nil then 
+                            togName.Text = newText
+                        end
                         if isTogOn then
                             toggled = true
                             game.TweenService:Create(img, TweenInfo.new(0.11, Enum.EasingStyle.Linear,Enum.EasingDirection.In), {
@@ -1450,7 +1436,7 @@ function Kavo.CreateLib(kavName, themeList)
                             sliderDrag:TweenSize(UDim2.new(0, math.clamp(mouse.X - sliderDrag.AbsolutePosition.X, 0, 149), 0, 6), "InOut", "Linear", 0.05, true)
                         end)
                         releaseconnection = uis.InputEnded:Connect(function(Mouse)
-                            if Mouse.UserInputType == Enum.UserInputType.MouseButton1 or Mouse.UserInputType == Enum.UserInputType.Touch then
+                            if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
                                 Value = math.floor((((tonumber(maxvalue) - tonumber(minvalue)) / 149) * sliderDrag.AbsoluteSize.X) + tonumber(minvalue))
                                 pcall(function()
                                     callback(Value)
