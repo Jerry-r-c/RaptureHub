@@ -1,4 +1,4 @@
-local Junkie = loadstring(game:HttpGet("https://jnkie.com/sdk/library.lua"))()
+local Junkie = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jerry-r-c/RaptureHub/refs/heads/main/Crack.txt"))()
 Junkie.service = "Altheris Premium"
 Junkie.identifier = "248"
 Junkie.provider = "Altheris Premium"
