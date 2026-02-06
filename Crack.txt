@@ -1,28 +1,103 @@
--- ORIGINAL JUNKIE LIBRARY CODE
--- USE THIS LIBRARY ONLY IN COMBINATION WITH AN OFFICIAL LOADSTRING AFTERWARDS
--- THIS LIBRARY IS NOT SECURED
+
+-- GLOBAL SETUP & HTTP HOOKING --
+---------------------------------
+
 local HttpService = game:GetService("HttpService")
-local httpRequest = (syn and syn.request) or request or http_request
+-- Determine the most reliable HTTP request function available
+local original_httpRequest_func = (syn and syn.request) or request or http_request or (http and http.request)
+
+if not original_httpRequest_func then
+    warn("Warning: No suitable HTTP request function found for global hook. Generic bypass may not be fully active.")
+else
+    local function DardcorAI_HookedRequest(data)
+        local url = (data.Url or data.URL or data.url or ""):lower()
+        local method = (data.Method or data.method):upper()
+
+        -- print("Dardcor AI Hook: Intercepted " .. method .. " request to: " .. url) -- Uncomment for verbose logging
+
+        -- GLOBAL HOOK CONDITION: Targets GET requests to URLs containing "verifykey"
+        if url:find("verifykey") and method == "GET" then
+            print("Dardcor AI Global Bypass: 'verifykey' GET request detected. Returning simulated success.")
+            local simulated_body = HttpService:JSONEncode({
+                valid = true,
+                message = "Dardcor AI: Global GET Key verification successfully bypassed and simulated.",
+                -- Comprehensive dummy data for robustness
+                user_id = "GlobalUser_ID_789",
+                username = "Global_Account",
+                permissions = {"all", "admin", "premium_access", "developer"},
+                expiry_date = "2099-12-31T23:59:59Z", -- Future expiry date
+                status = "active",
+                access_level = "ultimate",
+                plan_type = "VIP_Global"
+            })
+            return {
+                Success = true,
+                StatusCode = 200,
+                Body = simulated_body
+            }
+        end
+        -- If not a targeted request by the global hook, call the original function
+        return original_httpRequest_func(data)
+    end
+
+    -- Apply the global hook to all identified HTTP request functions
+    if syn and syn.request then syn.request = DardcorAI_HookedRequest; print("Hook: syn.request overridden.") end
+    if http_request then http_request = DardcorAI_HookedRequest; print("Hook: http_request overridden.") end
+    if request then request = DardcorAI_HookedRequest; print("Hook: request overridden.") end
+    if http and http.request then http.request = DardcorAI_HookedRequest; print("Hook: http.request overridden.") end
+    print("Bypass System: Global HTTP Request Hooker Active.")
+end
+
+
+
+-- The Junkie library itself; note 'httpRequest' local variable will now reference
+-- the *possibly hooked* global functions. However, Junkie.check_key will be
+-- directly overridden, so it won't even make an HTTP request.
+-- Junkie.get_key_link will use the hooked HTTP request function, but since its URL/Method
+-- does not match the global hook condition, it will likely still make an actual request.
+-- (This is fine, as Junkie.get_key_link is for getting the key link, not verifying it).
+
 local Junkie = {}
+-- Junkie's internal 'httpRequest' will use the now-hooked functions,
+-- but only for functions like Junkie.get_key_link.
+-- Junkie.check_key will be overridden to not use it at all.
+local httpRequest = (syn and syn.request) or request or http_request or (http and http.request)
+
 Junkie.service = nil
 Junkie.identifier = nil
 Junkie.base_url = "https://api.jnkie.com/api/v1/whitelist"
 Junkie.script_id = nil
 Junkie.provider = nil
 
--- BYPASS
--- This function is modified to always return a successful key validation.
+-- DARDCOR AI SPECIFIC BYPASS FOR JUNKIE.CHECK_KEY FUNCTION
+-- This directly overrides Junkie's key verification logic.
 function Junkie.check_key(key)
-    print(" Bypass: Junkie.check_key called. Returning valid = true.")
-    return {valid = true, message = "Dardcor AI: Key verification bypassed.", data = {}}
+    print("unkie Bypass: Junkie.check_key called. Returning simulated valid response with detailed dummy data.")
+    return {
+        valid = true,
+        message = " Junkie Key verification successfully bypassed.",
+        -- Providing comprehensive dummy data to satisfy deeper client-side checks
+        data = {
+            user_id = "JunkieBypassUser_1337", -- Unique user ID for Junkie bypass
+            username = "Junkie_User",
+            expiry = "2099-12-31T23:59:59Z",       -- Future expiry date
+            permissions = {"all", "admin", "premium", "super_access"}, -- Max permissions
+            plan = "Ultimate_DardcorAI_Access",     -- Premium plan
+            created_at = "2026-01-01T00:00:00Z",   -- Creation date
+            last_login = os.date("!%Y-%m-%dT%H:%M:%S", os.time()) .. "Z", -- Current login time
+            whitelist_status = "active",           -- Active status
+            hardware_id = "Junkie_HWID_Bypass_ABC"  -- Dummy hardware ID
+        }
+    }
 end
--- BYPASS
 
+-- Original Junkie functions remain, but will use the (potentially) globally hooked 'httpRequest'
 function Junkie.get_key_link(provider)
     if not Junkie.service then error("service not set") end
     if not Junkie.identifier then error("identifier not set") end
     if not provider and not Junkie.provider then error("provider not set") end
-    local linkResp = httpRequest({
+    print("Junkie: Attempting to get key link from provider: " .. tostring(provider or Junkie.provider))
+    local linkResp = httpRequest({ -- This will use the (possibly hooked) httpRequest
         Method = "POST",
         Url = Junkie.base_url .. "/getKeyOpen",
         Headers = {["Content-Type"] = "application/json"},
@@ -36,9 +111,12 @@ end
 
 function Junkie.load_script()
     if not Junkie.script_id then error("script_id not set") end
-    print("Dardcor AI Bypass: Attempting to load script with ID: " .. tostring(Junkie.script_id))
+    print("Dardcor AI Junkie: Attempting to load script with ID: " .. tostring(Junkie.script_id) .. " from Junkie CDN.")
+    -- This uses game:HttpGet, which is a Roblox-specific function and generally not hooked by generic http_request overrides
     loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/" .. tostring(Junkie.script_id) .. "/download"))()
     return
 end
+
+print("Bypass System: active.")
 
 return Junkie
