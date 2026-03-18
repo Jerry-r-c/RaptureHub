@@ -1,38 +1,38 @@
-local Players = game:GetService(“Players”)
+local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService(“RunService”)
-local UserInputService = game:GetService(“UserInputService”)
-local TweenService = game:GetService(“TweenService”)
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 local function setVelocity(hrp, vec)
-if hrp.AssemblyLinearVelocity ~= nil then
-hrp.AssemblyLinearVelocity = vec
-else
-hrp.Velocity = vec
-end
+    if hrp.AssemblyLinearVelocity ~= nil then
+        hrp.AssemblyLinearVelocity = vec
+    else
+        hrp.Velocity = vec
+    end
 end
 
 local function getVelocity(hrp)
-if hrp.AssemblyLinearVelocity ~= nil then
-return hrp.AssemblyLinearVelocity
-else
-return hrp.Velocity
-end
+    if hrp.AssemblyLinearVelocity ~= nil then
+        return hrp.AssemblyLinearVelocity
+    else
+        return hrp.Velocity
+    end
 end
 
-local PlayerGui = LocalPlayer:WaitForChild(“PlayerGui”)
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-local existing = PlayerGui:FindFirstChild(“AutoWallHopGui”)
+local existing = PlayerGui:FindFirstChild("AutoWallHopGui")
 if existing then existing:Destroy() end
 
-local ScreenGui = Instance.new(“ScreenGui”)
-ScreenGui.Name = “AutoWallHopGui”
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AutoWallHopGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = PlayerGui
 
-local Frame = Instance.new(“Frame”)
-Frame.Name = “MainFrame”
+local Frame = Instance.new("Frame")
+Frame.Name = "MainFrame"
 Frame.Size = UDim2.new(0, 160, 0, 64)
 Frame.Position = UDim2.new(0.5, -80, 0.75, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -40,44 +40,44 @@ Frame.BorderSizePixel = 0
 Frame.Active = true
 Frame.Parent = ScreenGui
 
-local FrameCorner = Instance.new(“UICorner”)
+local FrameCorner = Instance.new("UICorner")
 FrameCorner.CornerRadius = UDim.new(0, 16)
 FrameCorner.Parent = Frame
 
-local Stroke = Instance.new(“UIStroke”)
+local Stroke = Instance.new("UIStroke")
 Stroke.Color = Color3.fromRGB(60, 60, 60)
 Stroke.Thickness = 1.5
 Stroke.Parent = Frame
 
-local Dot = Instance.new(“Frame”)
-Dot.Name = “StatusDot”
+local Dot = Instance.new("Frame")
+Dot.Name = "StatusDot"
 Dot.Size = UDim2.new(0, 10, 0, 10)
 Dot.Position = UDim2.new(0, 12, 0.5, -5)
 Dot.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
 Dot.BorderSizePixel = 0
 Dot.Parent = Frame
 
-local DotCorner = Instance.new(“UICorner”)
+local DotCorner = Instance.new("UICorner")
 DotCorner.CornerRadius = UDim.new(1, 0)
 DotCorner.Parent = Dot
 
-local ToggleBtn = Instance.new(“TextButton”)
-ToggleBtn.Name = “ToggleBtn”
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "ToggleBtn"
 ToggleBtn.Size = UDim2.new(1, -30, 1, -16)
 ToggleBtn.Position = UDim2.new(0, 28, 0, 8)
 ToggleBtn.BackgroundTransparency = 1
-ToggleBtn.Text = “Wall Hop”
+ToggleBtn.Text = "Wall Hop"
 ToggleBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.TextSize = 15
 ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
 ToggleBtn.Parent = Frame
 
-local SubLabel = Instance.new(“TextLabel”)
+local SubLabel = Instance.new("TextLabel")
 SubLabel.Size = UDim2.new(1, -30, 0, 14)
 SubLabel.Position = UDim2.new(0, 28, 0, 30)
 SubLabel.BackgroundTransparency = 1
-SubLabel.Text = “OFF - tap to enable”
+SubLabel.Text = "OFF - tap to enable"
 SubLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
 SubLabel.Font = Enum.Font.Gotham
 SubLabel.TextSize = 11
@@ -89,33 +89,33 @@ local dragStartInput = nil
 local frameStartPos = nil
 
 Frame.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1
-or input.UserInputType == Enum.UserInputType.Touch then
-dragging = true
-dragStartInput = input.Position
-frameStartPos = Frame.Position
-end
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStartInput = input.Position
+        frameStartPos = Frame.Position
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-if not dragging then return end
-if input.UserInputType == Enum.UserInputType.MouseMovement
-or input.UserInputType == Enum.UserInputType.Touch then
-local delta = input.Position - dragStartInput
-Frame.Position = UDim2.new(
-frameStartPos.X.Scale,
-frameStartPos.X.Offset + delta.X,
-frameStartPos.Y.Scale,
-frameStartPos.Y.Offset + delta.Y
-)
-end
+    if not dragging then return end
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch then
+        local delta = input.Position - dragStartInput
+        Frame.Position = UDim2.new(
+            frameStartPos.X.Scale,
+            frameStartPos.X.Offset + delta.X,
+            frameStartPos.Y.Scale,
+            frameStartPos.Y.Offset + delta.Y
+        )
+    end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1
-or input.UserInputType == Enum.UserInputType.Touch then
-dragging = false
-end
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
 end)
 
 local isEnabled = false
@@ -125,79 +125,71 @@ local lastHitInstance = nil
 local Camera = workspace.CurrentCamera
 
 local function setEnabled(state)
-isEnabled = state
+    isEnabled = state
 
+    local targetColor = state and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 60, 60)
+    TweenService:Create(Dot, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
 
-local targetColor = state and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 60, 60)
-TweenService:Create(Dot, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+    ToggleBtn.TextColor3 = state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    SubLabel.Text = state and "ON - detecting walls" or "OFF - tap to enable"
+    SubLabel.TextColor3 = state and Color3.fromRGB(80, 200, 80) or Color3.fromRGB(100, 100, 100)
 
-ToggleBtn.TextColor3 = state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
-SubLabel.Text = state and "ON - detecting walls" or "OFF - tap to enable"
-SubLabel.TextColor3 = state and Color3.fromRGB(80, 200, 80) or Color3.fromRGB(100, 100, 100)
-
-local strokeTarget = state and Color3.fromRGB(80, 200, 80) or Color3.fromRGB(60, 60, 60)
-TweenService:Create(Stroke, TweenInfo.new(0.25), {Color = strokeTarget}):Play()
-
-
+    local strokeTarget = state and Color3.fromRGB(80, 200, 80) or Color3.fromRGB(60, 60, 60)
+    TweenService:Create(Stroke, TweenInfo.new(0.25), {Color = strokeTarget}):Play()
 end
 
 local function performFlick()
-if isFlicking then return end
-isFlicking = true
+    if isFlicking then return end
+    isFlicking = true
 
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hum or not hrp then
+        isFlicking = false
+        return
+    end
 
-local char = LocalPlayer.Character
-local hum = char and char:FindFirstChildOfClass("Humanoid")
-local hrp = char and char:FindFirstChild("HumanoidRootPart")
-if not hum or not hrp then
+    hum:ChangeState(Enum.HumanoidStateType.Jumping)
+
+    local vel = getVelocity(hrp)
+    setVelocity(hrp, Vector3.new(vel.X, 50, vel.Z))
+
+    local originalCFrame = Camera.CFrame
+    Camera.CFrame = originalCFrame * CFrame.Angles(0, math.rad(180), 0)
+    task.wait(0.01)
+    Camera.CFrame = originalCFrame
+
     isFlicking = false
-    return
-end
-
-hum:ChangeState(Enum.HumanoidStateType.Jumping)
-
-local vel = getVelocity(hrp)
-setVelocity(hrp, Vector3.new(vel.X, 50, vel.Z))
-
-local originalCFrame = Camera.CFrame
-Camera.CFrame = originalCFrame * CFrame.Angles(0, math.rad(180), 0)
-task.wait(0.01)
-Camera.CFrame = originalCFrame
-
-isFlicking = false
-
-
 end
 
 RunService.Heartbeat:Connect(function()
-if not isEnabled then return end
+    if not isEnabled then return end
 
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
 
-local char = LocalPlayer.Character
-local hrp = char and char:FindFirstChild("HumanoidRootPart")
-if not hrp then return end
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {char}
+    params.FilterType = Enum.RaycastFilterType.Exclude
 
-local params = RaycastParams.new()
-params.FilterDescendantsInstances = {char}
-params.FilterType = Enum.RaycastFilterType.Exclude
+    local result = workspace:Raycast(hrp.Position, Camera.CFrame.LookVector * 3, params)
 
-local result = workspace:Raycast(hrp.Position, Camera.CFrame.LookVector * 3, params)
-
-if result and result.Instance and result.Instance.CanCollide then
-    if lastHitInstance and lastHitInstance ~= result.Instance then
-        local now = tick()
-        if now - lastFlickTime > 0.05 then
-            lastFlickTime = now
-            performFlick()
+    if result and result.Instance and result.Instance.CanCollide then
+        if lastHitInstance and lastHitInstance ~= result.Instance then
+            local now = tick()
+            if now - lastFlickTime > 0.05 then
+                lastFlickTime = now
+                performFlick()
+            end
         end
+        lastHitInstance = result.Instance
+    else
+        lastHitInstance = nil
     end
-    lastHitInstance = result.Instance
-else
-    lastHitInstance = nil
-end
-
 end)
 
 ToggleBtn.Activated:Connect(function()
-setEnabled(not isEnabled)
+    setEnabled(not isEnabled)
 end)
