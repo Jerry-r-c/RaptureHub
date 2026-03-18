@@ -84,40 +84,36 @@ SubLabel.TextSize = 11
 SubLabel.TextXAlignment = Enum.TextXAlignment.Left
 SubLabel.Parent = Frame
 
-local dragging = false
-local dragStartInput = nil
-local frameStartPos = nil
+-- // Enhanced Draggable Logic (PC & Mobile)
+local dragToggle, dragStart, startPos
+
+local function updateInput(input)
+    local delta = input.Position - dragStart
+    local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    TweenService:Create(Frame, TweenInfo.new(0.10), {Position = position}):Play()
+end
 
 Frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStartInput = input.Position
-        frameStartPos = Frame.Position
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        dragToggle = true
+        dragStart = input.Position
+        startPos = Frame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragToggle = false
+            end
+        end)
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if not dragging then return end
-    if input.UserInputType == Enum.UserInputType.MouseMovement
-    or input.UserInputType == Enum.UserInputType.Touch then
-        local delta = input.Position - dragStartInput
-        Frame.Position = UDim2.new(
-            frameStartPos.X.Scale,
-            frameStartPos.X.Offset + delta.X,
-            frameStartPos.Y.Scale,
-            frameStartPos.Y.Offset + delta.Y
-        )
+    if dragToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        updateInput(input)
     end
 end)
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
-
+-- // Logic Variables
 local isEnabled = false
 local isFlicking = false
 local lastFlickTime = 0
