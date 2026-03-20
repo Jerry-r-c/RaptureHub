@@ -1,0 +1,165 @@
+warn("Anti afk running")
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CollectionService = game:GetService("CollectionService")
+
+local LocalPlayer = Players.LocalPlayer
+
+LocalPlayer.Idled:Connect(function()
+    warn("Anti afk ran")
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Marco8642/science/main/ui%20libs2"))()
+local example = library:CreateWindow({
+  text = "Drive X"
+})
+
+-- Centralized Settings table (Much faster than getfenv)
+local Settings = {
+    DriveSpeed = 500,
+    AutoDrive = false,
+    AutoRace = false,
+    RaceSpeedMultiplier = 2, -- Default 2x speed for the race
+    AutoPumpkins = false
+}
+
+example:AddBox("Enter Vehicle Speed", function(object, focus)
+    if focus then
+        Settings.DriveSpeed = tonumber(object.Text) or 500
+    end
+end)
+
+-- NEW: Allows you to dynamically speed up the Auto Race
+example:AddBox("Race Speed Multiplier (e.g., 2, 5, 10)", function(object, focus)
+    if focus then
+        Settings.RaceSpeedMultiplier = tonumber(object.Text) or 2
+    end
+end)
+
+example:AddToggle("Auto Drive", function(state)
+    Settings.AutoDrive = state
+    if Settings.AutoDrive then
+        local car = LocalPlayer.ReplicationFocus
+        if car then
+            LocalPlayer:RequestStreamAroundAsync(Vector3.new(-3531.84521, 36.217411, 1262.63647))
+            task.wait(0.5)
+            car:PivotTo(CFrame.new(-3531.84521, 36.217411, 1262.63647, -0.929316938, -7.24218182e-07, 0.36928311, 8.97509338e-08, 1, 2.18700848e-06, -0.36928311, 2.06556751e-06, -0.929316938))
+            task.wait(1)
+            local btp = car.CFrame
+
+            task.spawn(function()
+                while Settings.AutoDrive do
+                    VirtualInputManager:SendKeyEvent(true, "W", false, game)
+                    local speed = Settings.DriveSpeed
+                    car = LocalPlayer.ReplicationFocus
+                    if not car then task.wait() continue end
+                    
+                    car:PivotTo(btp)
+                    local targetPos = CFrame.new(-4049.48584, car.Position.Y, 1018.12622).Position
+                    local dist = (car.Position - targetPos).Magnitude
+                    
+                    local TweenInfoToUse = TweenInfo.new(dist/speed, Enum.EasingStyle.Linear)
+                    
+                    local TweenValue = Instance.new("CFrameValue")
+                    TweenValue.Value = car.CFrame
+                                
+                    local conn = TweenValue.Changed:Connect(function()
+                        car:PivotTo(TweenValue.Value)
+                    end)
+                                
+                    local OnTween = TweenService:Create(TweenValue, TweenInfoToUse, {Value = CFrame.new(targetPos)})
+                    OnTween:Play()
+                    OnTween.Completed:Wait()
+                    
+                    -- CLEANUP to prevent lag/memory leaks
+                    conn:Disconnect() 
+                    TweenValue:Destroy()
+                    
+                    VirtualInputManager:SendKeyEvent(false, "W", false, game)
+                    task.wait()
+                end
+            end)
+        end
+    end
+end)
+
+example:AddToggle("Auto Bridge Trail Race", function(state)
+    Settings.AutoRace = state
+    
+    if Settings.AutoRace then
+        task.spawn(function()
+            local CarSerivce = require(LocalPlayer.PlayerScripts.TS.CarService.CarService_Client).CarSerivce
+            
+            while Settings.AutoRace do
+                task.wait()
+                local CarInfo = CarSerivce.ActiveCar
+                if not CarInfo then continue end
+                
+                -- Calculate speed and apply the custom UI multiplier
+                local CarGears = CarInfo.CarState.State.Config.Physics.Transmission.Gears
+                local maxSpeed = CarGears[#CarGears][1] * Settings.RaceSpeedMultiplier 
+                
+                local checkpointsFolder = workspace:FindFirstChild("RaceCheckpoints")
+                
+                if not checkpointsFolder or not checkpointsFolder:FindFirstChildOfClass("Model") then  
+                    ReplicatedStorage["events-shared/Definations/Networking/RaceDefinations@GeneralEvents"].EnterRaceQueue:FireServer("Bridge_Trail", true)
+                    task.wait(0.5) -- Faster queue loop
+                else
+                    for _, v in pairs(checkpointsFolder:GetChildren()) do
+                        if v:IsA("Model") and v:FindFirstChild("Ring") and v.Ring.Transparency < 1 then
+                            local targetPos = v.WorldPivot
+                            local dist = (CarInfo.Body.Position - targetPos.Position).Magnitude
+                            
+                            -- Clamp minimum time to prevent teleportation kicks/errors
+                            local timeToTake = math.max(0.05, dist / maxSpeed) 
+                            
+                            local TweenInfoToUse = TweenInfo.new(timeToTake, Enum.EasingStyle.Linear)
+                            local TweenValue = Instance.new("CFrameValue")
+                            TweenValue.Value = CarInfo.Body.CFrame
+                                        
+                            local conn = TweenValue.Changed:Connect(function()
+                                CarInfo.Body.CFrame = TweenValue.Value
+                                CarInfo.Body.AssemblyLinearVelocity = Vector3.zero
+                            end) 
+                            
+                            local currentTween = TweenService:Create(TweenValue, TweenInfoToUse, {Value = targetPos})
+                            currentTween:Play()
+                            currentTween.Completed:Wait()
+                            
+                            -- CLEANUP to prevent lag/memory leaks
+                            conn:Disconnect() 
+                            TweenValue:Destroy()
+                            
+                            break -- Force it to evaluate the next active checkpoint cleanly
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+example:AddToggle("Auto Collect Pumpkins", function(state)
+    Settings.AutoPumpkins = state
+    if Settings.AutoPumpkins then
+        task.spawn(function()
+            while Settings.AutoPumpkins do
+                task.wait(0.1) -- Added slight delay to prevent server crash/lag
+                local prim = LocalPlayer.ReplicationFocus
+                if not prim then continue end
+
+                for _, v in pairs(CollectionService:GetTagged("HaloweenPumpkin")) do
+                    if v:IsA("Part") and v:FindFirstChild("TouchInterest") then
+                        firetouchinterest(prim, v, 0)
+                        firetouchinterest(prim, v, 1)
+                    end
+                end
+            end
+        end)
+    end
+end)
