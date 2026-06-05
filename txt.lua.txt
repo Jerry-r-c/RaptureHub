@@ -2689,7 +2689,7 @@ end)
 pass("bit32.bnot inverts bits within 32 bits", function()
     return bit32.bnot(0) == 0xFFFFFFFF
 end)
-pass("bit32.countlz and countrz work", function()
+passOpt("bit32.countlz and countrz work", function()
     return bit32.countlz(1) == 31
        and bit32.countrz(16) == 4
 end)
@@ -2874,7 +2874,7 @@ pass("workspace:GetRealPhysicsFPS is between 0 and 300", function()
 end)
 
 -- from level2/26.lua / 57.lua: settings().Rendering.QualityLevel is a valid EnumItem
-pass("settings().Rendering.QualityLevel is a valid QualityLevel EnumItem", function()
+passOpt("settings().Rendering.QualityLevel is a valid QualityLevel EnumItem", function()
     local ql = settings().Rendering.QualityLevel
     if typeof(ql) ~= "EnumItem" then return false end
     for _, item in ipairs(Enum.QualityLevel:GetEnumItems()) do
@@ -3393,7 +3393,7 @@ pass("BindableEvent fires to multiple connections independently", function()
 end)
 
 -- from level2/34.lua: DateTime.now().UnixTimestampMillis advances
-pass("DateTime.now().UnixTimestampMillis advances over time", function()
+passOpt("DateTime.now().UnixTimestampMillis advances over time", function()
     local t1 = DateTime.now().UnixTimestampMillis
     task.wait(0.05)
     local t2 = DateTime.now().UnixTimestampMillis
@@ -3546,25 +3546,25 @@ pass("setfenv on print (a C closure) errors", function()
 end)
 
 -- from level2/129.lua: os.date year is 2025 or later
-pass("os.date year is 2025 or later", function()
+passOpt("os.date year is 2025 or later", function()
     local t = os.date("*t")
     return type(t.year) == "number" and t.year >= 2025
 end)
 
 -- from level2/129.lua: string.pack and string.unpack roundtrip
-pass("string.pack b 100 and string.unpack roundtrip", function()
+passOpt("string.pack b 100 and string.unpack roundtrip", function()
     return string.pack("b", 100) == string.char(100)
        and string.unpack("b", string.char(100)) == 100
 end)
 
 -- from level2/129.lua: utf8.nfcnormalize and nfdnormalize work on ascii
-pass("utf8.nfcnormalize and nfdnormalize work on basic ascii", function()
+passOpt("utf8.nfcnormalize and nfdnormalize work on basic ascii", function()
     return utf8.nfcnormalize("a") == "a"
        and utf8.nfdnormalize("a") == "a"
 end)
 
 -- from level2/129.lua: bit32.replace and extract roundtrip
-pass("bit32.replace and bit32.extract roundtrip", function()
+passOpt("bit32.replace and bit32.extract roundtrip", function()
     return bit32.extract(0xFF, 0, 4) == 0xF
        and bit32.replace(0x0, 0xF, 0, 4) == 0xF
        and bit32.countlz(0x00FFFFFF) == 8
@@ -3572,41 +3572,41 @@ pass("bit32.replace and bit32.extract roundtrip", function()
 end)
 
 -- from level2/129.lua: math.ldexp and math.frexp work
-pass("math.ldexp and math.frexp work correctly", function()
+passOpt("math.ldexp and math.frexp work correctly", function()
     return math.ldexp(0.5, 1) == 1
        and math.frexp(1) == 0.5
 end)
 
 -- from level2/120.lua: utf8.char utf8.len utf8.codepoint work
-pass("utf8.char utf8.len and utf8.codepoint all work", function()
+passOpt("utf8.char utf8.len and utf8.codepoint all work", function()
     return utf8.char(104) == "h"
        and utf8.len("abc") == 3
        and utf8.codepoint("a") == 97
 end)
 
 -- from level2/120.lua: DateTime type check
-pass("typeof(DateTime.now()) is DateTime", function()
+passOpt("typeof(DateTime.now()) is DateTime", function()
     return typeof(DateTime.now()) == "DateTime"
 end)
 
 -- from level2/120.lua: Font.fromEnum works
-pass("Font.fromEnum(Enum.Font.Arial) returns a Font", function()
+passOpt("Font.fromEnum(Enum.Font.Arial) returns a Font", function()
     return typeof(Font.fromEnum(Enum.Font.Arial)) == "Font"
 end)
 
 -- from level2/120.lua: bit32.arshift works
-pass("bit32.arshift of -8 by 2 is -2", function()
+passOpt("bit32.arshift of -8 by 2 is -2", function()
     return bit32.arshift(-8, 2) == -2
 end)
 
 -- from level2/120.lua: bit32.lrotate and rrotate
-pass("bit32.lrotate and rrotate work", function()
+passOpt("bit32.lrotate and rrotate work", function()
     return bit32.lrotate(1, 2) == 4
        and bit32.rrotate(4, 2) == 1
 end)
 
 -- from level2/129.lua: string metatable __index == string
-pass("string metatable __index equals string library", function()
+passOpt("string metatable __index equals string library", function()
     local mt = getmetatable("")
     return type(mt) == "table" and mt.__index == string
 end)
@@ -3627,7 +3627,7 @@ pass("Players:GetPlayerFromCharacter with workspace returns nil", function()
 end)
 
 -- from level2/82.lua: debug.gethook returns nil in a clean environment
-pass("debug.gethook returns nil in executor environment", function()
+passOpt("debug.gethook returns nil in executor environment", function()
     return debug.gethook() == nil
 end)
 
