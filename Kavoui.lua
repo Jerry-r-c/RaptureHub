@@ -64,6 +64,23 @@ function Utility:TweenObject(obj, properties, duration, ...)
     tween:Create(obj, tweeninfo(duration, ...), properties):Play()
 end
 
+-- Mobile helper: tracks last mouse or touch position for ripple effects
+local lastInputPos = Vector2.new(0, 0)
+input.InputChanged:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseMovement or
+       inp.UserInputType == Enum.UserInputType.Touch then
+        lastInputPos = Vector2.new(inp.Position.X, inp.Position.Y)
+    end
+end)
+input.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.Touch then
+        lastInputPos = Vector2.new(inp.Position.X, inp.Position.Y)
+    end
+end)
+local function getInputPos()
+    return lastInputPos
+end
+
 
 local themes = {
     SchemeColor = Color3.fromRGB(74, 99, 135),
@@ -389,7 +406,6 @@ function Kavo.CreateLib(kavName, themeList)
                 themeList.Header       = Color3.fromHSV(h, 0.8,  0.3 )
                 themeList.Background   = Color3.fromHSV(h, 0.7,  0.15)
                 themeList.ElementColor = Color3.fromHSV(h, 0.6,  0.22)
-                themeList.TextColor    = Color3.fromHSV((h + 0.5) % 1, 1, 1)
             end
         end)()
     end
@@ -739,7 +755,7 @@ function Kavo.CreateLib(kavName, themeList)
                         callback()
                         local c = sample:Clone()
                         c.Parent = btn
-                        local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                        local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                         c.Position = UDim2.new(0, x, 0, y)
                         local len, size = 0.35, nil
                         if btn.AbsoluteSize.X >= btn.AbsoluteSize.Y then
@@ -1144,7 +1160,7 @@ function Kavo.CreateLib(kavName, themeList)
                                 }):Play()
                                 local c = sample:Clone()
                                 c.Parent = btn
-                                local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                                local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                                 c.Position = UDim2.new(0, x, 0, y)
                                 local len, size = 0.35, nil
                                 if btn.AbsoluteSize.X >= btn.AbsoluteSize.Y then
@@ -1164,7 +1180,7 @@ function Kavo.CreateLib(kavName, themeList)
                                 }):Play()
                                 local c = sample:Clone()
                                 c.Parent = btn
-                                local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                                local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                                 c.Position = UDim2.new(0, x, 0, y)
                                 local len, size = 0.35, nil
                                 if btn.AbsoluteSize.X >= btn.AbsoluteSize.Y then
@@ -1485,6 +1501,42 @@ function Kavo.CreateLib(kavName, themeList)
                         Utility:TweenObject(blurFrame, {BackgroundTransparency = 1}, 0.2)
                     end
                 end)
+
+                -- Mobile touch support for slider
+                sliderBtn.InputBegan:Connect(function(inp)
+                    if inp.UserInputType == Enum.UserInputType.Touch then
+                        if not focusing then
+                            game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                TextTransparency = 0
+                            }):Play()
+                            local touchMoveConn, touchEndConn
+                            local function updateSliderFromTouch(touchInput)
+                                local relativeX = math.clamp(touchInput.Position.X - sliderBtn.AbsolutePosition.X, 0, 149)
+                                sliderDrag:TweenSize(UDim2.new(0, relativeX, 0, 6), "InOut", "Linear", 0.05, true)
+                                Value = math.floor((((tonumber(maxvalue) - tonumber(minvalue)) / 149) * relativeX) + tonumber(minvalue))
+                                val.Text = Value
+                                pcall(function()
+                                    callback(Value)
+                                end)
+                            end
+                            updateSliderFromTouch(inp)
+                            touchMoveConn = uis.InputChanged:Connect(function(changedInp)
+                                if changedInp == inp then
+                                    updateSliderFromTouch(changedInp)
+                                end
+                            end)
+                            touchEndConn = uis.InputEnded:Connect(function(endInp)
+                                if endInp == inp then
+                                    game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                        TextTransparency = 1
+                                    }):Play()
+                                    touchMoveConn:Disconnect()
+                                    touchEndConn:Disconnect()
+                                end
+                            end)
+                        end
+                    end
+                end)
                 viewInfo.MouseButton1Click:Connect(function()
                     if not viewDe then
                         viewDe = true
@@ -1565,7 +1617,7 @@ function Kavo.CreateLib(kavName, themeList)
                             UpdateSize()
                             local c = sample:Clone()
                             c.Parent = btn
-                            local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                            local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                             c.Position = UDim2.new(0, x, 0, y)
                             local len, size = 0.35, nil
                             if btn.AbsoluteSize.X >= btn.AbsoluteSize.Y then
@@ -1587,7 +1639,7 @@ function Kavo.CreateLib(kavName, themeList)
                             UpdateSize()
                             local c = sample:Clone()
                             c.Parent = btn
-                            local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                            local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                             c.Position = UDim2.new(0, x, 0, y)
                             local len, size = 0.35, nil
                             if btn.AbsoluteSize.X >= btn.AbsoluteSize.Y then
@@ -1789,7 +1841,7 @@ function Kavo.CreateLib(kavName, themeList)
                             UpdateSize()
                             local c = sample1:Clone()
                             c.Parent = optionSelect
-                            local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                            local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                             c.Position = UDim2.new(0, x, 0, y)
                             local len, size = 0.35, nil
                             if optionSelect.AbsoluteSize.X >= optionSelect.AbsoluteSize.Y then
@@ -1890,7 +1942,7 @@ function Kavo.CreateLib(kavName, themeList)
                                 UpdateSize()
                                 local c = sample11:Clone()
                                 c.Parent = optionSelect
-                                local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                                local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                                 c.Position = UDim2.new(0, x, 0, y)
                                 local len, size = 0.35, nil
                                 if optionSelect.AbsoluteSize.X >= optionSelect.AbsoluteSize.Y then
@@ -1989,15 +2041,21 @@ function Kavo.CreateLib(kavName, themeList)
                 keybindElement.TextSize = 14.000
                 keybindElement.MouseButton1Click:connect(function(e) 
                     if not focusing then
-                        togName_2.Text = ". . ."
-                        local a, b = game:GetService('UserInputService').InputBegan:wait();
-                        if a.KeyCode.Name ~= "Unknown" then
-                            togName_2.Text = a.KeyCode.Name
-                            oldKey = a.KeyCode.Name;
+                        -- Mobile: no physical keyboard, skip keybind listening
+                        if game:GetService("UserInputService").TouchEnabled and 
+                           not game:GetService("UserInputService").KeyboardEnabled then
+                            togName_2.Text = "N/A"
+                        else
+                            togName_2.Text = ". . ."
+                            local a, b = game:GetService('UserInputService').InputBegan:wait();
+                            if a.KeyCode.Name ~= "Unknown" then
+                                togName_2.Text = a.KeyCode.Name
+                                oldKey = a.KeyCode.Name;
+                            end
                         end
                         local c = sample:Clone()
                         c.Parent = keybindElement
-                        local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                        local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                         c.Position = UDim2.new(0, x, 0, y)
                         local len, size = 0.35, nil
                         if keybindElement.AbsoluteSize.X >= keybindElement.AbsoluteSize.Y then
@@ -2233,7 +2291,7 @@ function Kavo.CreateLib(kavName, themeList)
                             UpdateSize()
                             local c = sample:Clone()
                             c.Parent = btn
-                            local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                            local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                             c.Position = UDim2.new(0, x, 0, y)
                             local len, size = 0.35, nil
                             if btn.AbsoluteSize.X >= btn.AbsoluteSize.Y then
@@ -2255,7 +2313,7 @@ function Kavo.CreateLib(kavName, themeList)
                             UpdateSize()
                             local c = sample:Clone()
                             c.Parent = btn
-                            local x, y = (ms.X - c.AbsolutePosition.X), (ms.Y - c.AbsolutePosition.Y)
+                            local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
                             c.Position = UDim2.new(0, x, 0, y)
                             local len, size = 0.35, nil
                             if btn.AbsoluteSize.X >= btn.AbsoluteSize.Y then
@@ -2680,7 +2738,266 @@ function Kavo.CreateLib(kavName, themeList)
                 end	
                 return labelFunctions
             end	
+
+            -- NewDialog: a button that opens a popup with choice buttons
+            -- Usage: Section:NewDialog("Fly", "Choose fly mode", {"Mobile", "PC"}, function(choice) print(choice) end)
+            function Elements:NewDialog(dname, dtip, choices, callback)
+                dname    = dname    or "Dialog"
+                dtip     = dtip     or "Pick an option"
+                choices  = choices  or {}
+                callback = callback or function() end
+
+                -- The trigger button (looks just like NewButton)
+                local buttonElement = Instance.new("TextButton")
+                local UICorner      = Instance.new("UICorner")
+                local btnInfo       = Instance.new("TextLabel")
+                local touch         = Instance.new("ImageLabel")
+                local Sample        = Instance.new("ImageLabel")
+
+                buttonElement.Name             = dname
+                buttonElement.Parent           = sectionInners
+                buttonElement.BackgroundColor3 = themeList.ElementColor
+                buttonElement.ClipsDescendants = true
+                buttonElement.Size             = UDim2.new(0, 352, 0, 33)
+                buttonElement.AutoButtonColor  = false
+                buttonElement.Font             = Enum.Font.SourceSans
+                buttonElement.Text             = ""
+                buttonElement.TextColor3       = Color3.fromRGB(0, 0, 0)
+                buttonElement.TextSize         = 14
+
+                UICorner.CornerRadius = UDim.new(0, 4)
+                UICorner.Parent       = buttonElement
+
+                touch.Name                 = "touch"
+                touch.Parent               = buttonElement
+                touch.BackgroundTransparency = 1
+                touch.Position             = UDim2.new(0.02, 0, 0.18, 0)
+                touch.Size                 = UDim2.new(0, 21, 0, 21)
+                touch.Image                = "rbxassetid://3926305904"
+                touch.ImageColor3          = themeList.SchemeColor
+                touch.ImageRectOffset      = Vector2.new(84, 204)
+                touch.ImageRectSize        = Vector2.new(36, 36)
+
+                btnInfo.Name               = "btnInfo"
+                btnInfo.Parent             = buttonElement
+                btnInfo.BackgroundTransparency = 1
+                btnInfo.Position           = UDim2.new(0.097, 0, 0.273, 0)
+                btnInfo.Size               = UDim2.new(0, 314, 0, 14)
+                btnInfo.Font               = Enum.Font.GothamSemibold
+                btnInfo.Text               = dname
+                btnInfo.RichText           = true
+                btnInfo.TextColor3         = themeList.TextColor
+                btnInfo.TextSize           = 14
+                btnInfo.TextXAlignment     = Enum.TextXAlignment.Left
+
+                Sample.Name                = "Sample"
+                Sample.Parent              = buttonElement
+                Sample.BackgroundTransparency = 1
+                Sample.Image               = "http://www.roblox.com/asset/?id=4560909609"
+                Sample.ImageColor3         = themeList.SchemeColor
+                Sample.ImageTransparency   = 0.6
+
+                -- â”€â”€ Popup overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                local overlay = Instance.new("Frame")
+                overlay.Name               = "DialogOverlay"
+                overlay.Parent             = Main
+                overlay.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
+                overlay.BackgroundTransparency = 0.45
+                overlay.BorderSizePixel    = 0
+                overlay.Size               = UDim2.new(1, 0, 1, 0)
+                overlay.Position           = UDim2.new(0, 0, 0, 0)
+                overlay.ZIndex             = 100
+                overlay.Visible            = false
+
+                local popup = Instance.new("Frame")
+                popup.Name                 = "DialogPopup"
+                popup.Parent               = overlay
+                popup.BackgroundColor3     = themeList.Background
+                popup.BorderSizePixel      = 0
+                popup.AnchorPoint          = Vector2.new(0.5, 0.5)
+                popup.Position             = UDim2.new(0.5, 0, 0.5, 0)
+                popup.Size                 = UDim2.new(0, 260, 0, 90 + (#choices * 38))
+                popup.ZIndex               = 101
+
+                local popupCorner = Instance.new("UICorner")
+                popupCorner.CornerRadius   = UDim.new(0, 6)
+                popupCorner.Parent         = popup
+
+                -- Title bar
+                local popupHeader = Instance.new("Frame")
+                popupHeader.Name           = "popupHeader"
+                popupHeader.Parent         = popup
+                popupHeader.BackgroundColor3 = themeList.SchemeColor
+                popupHeader.BorderSizePixel = 0
+                popupHeader.Size           = UDim2.new(1, 0, 0, 36)
+                popupHeader.ZIndex         = 102
+
+                local popupHeaderCorner = Instance.new("UICorner")
+                popupHeaderCorner.CornerRadius = UDim.new(0, 6)
+                popupHeaderCorner.Parent   = popupHeader
+
+                -- Cover the bottom rounded corners of header
+                local headerCoverBottom = Instance.new("Frame")
+                headerCoverBottom.Parent              = popupHeader
+                headerCoverBottom.BackgroundColor3    = themeList.SchemeColor
+                headerCoverBottom.BorderSizePixel     = 0
+                headerCoverBottom.Position            = UDim2.new(0, 0, 0.6, 0)
+                headerCoverBottom.Size                = UDim2.new(1, 0, 0.4, 0)
+                headerCoverBottom.ZIndex              = 102
+
+                local popupTitle = Instance.new("TextLabel")
+                popupTitle.Name            = "popupTitle"
+                popupTitle.Parent          = popupHeader
+                popupTitle.BackgroundTransparency = 1
+                popupTitle.Position        = UDim2.new(0.04, 0, 0, 0)
+                popupTitle.Size            = UDim2.new(0.85, 0, 1, 0)
+                popupTitle.Font            = Enum.Font.GothamSemibold
+                popupTitle.Text            = dname
+                popupTitle.TextColor3      = themeList.TextColor
+                popupTitle.TextSize        = 14
+                popupTitle.TextXAlignment  = Enum.TextXAlignment.Left
+                popupTitle.ZIndex          = 103
+
+                local popupTip = Instance.new("TextLabel")
+                popupTip.Name              = "popupTip"
+                popupTip.Parent            = popup
+                popupTip.BackgroundTransparency = 1
+                popupTip.Position          = UDim2.new(0.04, 0, 0, 42)
+                popupTip.Size              = UDim2.new(0.92, 0, 0, 20)
+                popupTip.Font              = Enum.Font.Gotham
+                popupTip.Text              = dtip
+                popupTip.TextColor3        = themeList.TextColor
+                popupTip.TextSize          = 12
+                popupTip.TextXAlignment    = Enum.TextXAlignment.Left
+                popupTip.ZIndex            = 102
+
+                -- Choice buttons
+                for i, choice in ipairs(choices) do
+                    local choiceBtn = Instance.new("TextButton")
+                    local choiceCorner = Instance.new("UICorner")
+
+                    choiceBtn.Name             = "Choice_"..choice
+                    choiceBtn.Parent           = popup
+                    choiceBtn.BackgroundColor3 = themeList.ElementColor
+                    choiceBtn.BorderSizePixel  = 0
+                    choiceBtn.Position         = UDim2.new(0.04, 0, 0, 68 + ((i - 1) * 38))
+                    choiceBtn.Size             = UDim2.new(0.92, 0, 0, 30)
+                    choiceBtn.AutoButtonColor  = false
+                    choiceBtn.Font             = Enum.Font.GothamSemibold
+                    choiceBtn.Text             = choice
+                    choiceBtn.TextColor3       = themeList.TextColor
+                    choiceBtn.TextSize         = 13
+                    choiceBtn.ZIndex           = 102
+
+                    choiceCorner.CornerRadius  = UDim.new(0, 4)
+                    choiceCorner.Parent        = choiceBtn
+
+                    -- Hover
+                    choiceBtn.MouseEnter:Connect(function()
+                        game.TweenService:Create(choiceBtn, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {
+                            BackgroundColor3 = Color3.fromRGB(
+                                themeList.ElementColor.r * 255 + 12,
+                                themeList.ElementColor.g * 255 + 12,
+                                themeList.ElementColor.b * 255 + 12
+                            )
+                        }):Play()
+                    end)
+                    choiceBtn.MouseLeave:Connect(function()
+                        game.TweenService:Create(choiceBtn, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {
+                            BackgroundColor3 = themeList.ElementColor
+                        }):Play()
+                    end)
+
+                    choiceBtn.MouseButton1Click:Connect(function()
+                        -- Close popup
+                        game.TweenService:Create(popup, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                            Size = UDim2.new(0, 0, 0, 0),
+                            Position = UDim2.new(0.5, 0, 0.5, 0)
+                        }):Play()
+                        wait(0.15)
+                        overlay.Visible = false
+                        popup.Size     = UDim2.new(0, 260, 0, 90 + (#choices * 38))
+                        popup.Position = UDim2.new(0.5, 0, 0.5, 0)
+                        pcall(callback, choice)
+                    end)
+
+                    -- Keep colors updated for rainbow theme
+                    coroutine.wrap(function()
+                        while choiceBtn.Parent do
+                            wait()
+                            choiceBtn.TextColor3       = themeList.TextColor
+                            choiceBtn.BackgroundColor3 = themeList.ElementColor
+                        end
+                    end)()
+                end
+
+                -- Keep popup colors updated
+                coroutine.wrap(function()
+                    while popup.Parent do
+                        wait()
+                        popup.BackgroundColor3      = themeList.Background
+                        popupHeader.BackgroundColor3 = themeList.SchemeColor
+                        headerCoverBottom.BackgroundColor3 = themeList.SchemeColor
+                        popupTitle.TextColor3       = themeList.TextColor
+                        popupTip.TextColor3         = themeList.TextColor
+                    end
+                end)()
+
+                -- Clicking outside the popup closes it
+                overlay.MouseButton1Click:Connect(function()
+                    game.TweenService:Create(popup, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                        Size = UDim2.new(0, 0, 0, 0),
+                        Position = UDim2.new(0.5, 0, 0.5, 0)
+                    }):Play()
+                    wait(0.15)
+                    overlay.Visible = false
+                    popup.Size     = UDim2.new(0, 260, 0, 90 + (#choices * 38))
+                    popup.Position = UDim2.new(0.5, 0, 0.5, 0)
+                end)
+
+                -- Trigger button click â†’ open popup
+                buttonElement.MouseButton1Click:Connect(function()
+                    if not focusing then
+                        local c = Sample:Clone()
+                        c.Parent = buttonElement
+                        local _ip = getInputPos()
+                        local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
+                        c.Position = UDim2.new(0, x, 0, y)
+                        local len = 0.35
+                        local size = math.max(buttonElement.AbsoluteSize.X, buttonElement.AbsoluteSize.Y) * 1.5
+                        c:TweenSizeAndPosition(UDim2.new(0, size, 0, size), UDim2.new(0.5, -size/2, 0.5, -size/2), "Out", "Quad", len, true)
+                        for i = 1, 10 do
+                            c.ImageTransparency = c.ImageTransparency + 0.05
+                            wait(len / 12)
+                        end
+                        c:Destroy()
+                        -- Open popup with a pop-in tween
+                        overlay.Visible = true
+                        popup.Size     = UDim2.new(0, 0, 0, 0)
+                        popup.Position = UDim2.new(0.5, 0, 0.5, 0)
+                        game.TweenService:Create(popup, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                            Size = UDim2.new(0, 260, 0, 90 + (#choices * 38))
+                        }):Play()
+                    end
+                end)
+
+                -- Keep trigger button colors updated
+                coroutine.wrap(function()
+                    while buttonElement.Parent do
+                        wait()
+                        buttonElement.BackgroundColor3 = themeList.ElementColor
+                        btnInfo.TextColor3             = themeList.TextColor
+                        touch.ImageColor3              = themeList.SchemeColor
+                        Sample.ImageColor3             = themeList.SchemeColor
+                    end
+                end)()
+
+                updateSectionFrame()
+                UpdateSize()
+            end
+
             return Elements
+
         end
         return Sections
     end  
