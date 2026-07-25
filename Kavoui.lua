@@ -135,6 +135,13 @@ local themeStyles = {
         Header = Color3.fromRGB(22, 29, 31),
         TextColor = Color3.fromRGB(255,255,255),
         ElementColor = Color3.fromRGB(22, 29, 31)
+    },
+    Rainbow = {
+        SchemeColor = Color3.fromRGB(255, 0, 0),
+        Background = Color3.fromRGB(18, 18, 18),
+        Header = Color3.fromRGB(10, 10, 10),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(28, 28, 28)
     }
 }
 local oldTheme = ""
@@ -186,6 +193,8 @@ function Kavo.CreateLib(kavName, themeList)
         themeList = themeStyles.Synapse
     elseif themeList == "Serpent" then
         themeList = themeStyles.Serpent
+    elseif themeList == "Rainbow" then
+        themeList = themeStyles.Rainbow
     else
         if themeList.SchemeColor == nil then
             themeList.SchemeColor = Color3.fromRGB(74, 99, 135)
@@ -368,6 +377,24 @@ function Kavo.CreateLib(kavName, themeList)
             coverup.BackgroundColor3 = themeList.Header
         end
     end)()
+
+    -- Rainbow theme: cycle ALL colors through HSV hues
+    if themeList == themeStyles.Rainbow then
+        local rainbowHue = 0
+        coroutine.wrap(function()
+            while wait() do
+                rainbowHue = (rainbowHue + 0.4) % 360
+                local h = rainbowHue / 360
+                themeList.SchemeColor  = Color3.fromHSV(h, 1,    1   )
+                themeList.Header       = Color3.fromHSV(h, 0.8,  0.3 )
+                themeList.Background   = Color3.fromHSV(h, 0.7,  0.15)
+                themeList.ElementColor = Color3.fromHSV(h, 0.6,  0.22)
+                themeList.TextColor    = Color3.fromHSV((h + 0.5) % 1, 1, 1)
+            end
+        end)()
+    end
+
+
 
     function Kavo:ChangeColor(prope,color)
         if prope == "Background" then
