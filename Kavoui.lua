@@ -61,7 +61,9 @@ function Kavo:DraggingEnabled(frame, parent)
 end
 
 function Utility:TweenObject(obj, properties, duration, ...)
-    tween:Create(obj, tweeninfo(duration, ...), properties):Play()
+    pcall(function()
+        tween:Create(obj, tweeninfo(duration, ...), properties):Play()
+    end)
 end
 
 -- Mobile helper: tracks last mouse or touch position for ripple effects
@@ -322,14 +324,18 @@ function Kavo.CreateLib(kavName, themeList)
     close.ImageRectOffset = Vector2.new(284, 4)
     close.ImageRectSize = Vector2.new(24, 24)
     close.MouseButton1Click:Connect(function()
-        game.TweenService:Create(close, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-            ImageTransparency = 1
-        }):Play()
+        pcall(function()
+            game.TweenService:Create(close, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                ImageTransparency = 1
+            }):Play()
+        end)
         wait()
-        game.TweenService:Create(Main, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Size = UDim2.new(0,0,0,0),
-			Position = UDim2.new(0, Main.AbsolutePosition.X + (Main.AbsoluteSize.X / 2), 0, Main.AbsolutePosition.Y + (Main.AbsoluteSize.Y / 2))
-		}):Play()
+        pcall(function()
+            game.TweenService:Create(Main, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    			Size = UDim2.new(0,0,0,0),
+    			Position = UDim2.new(0, Main.AbsolutePosition.X + (Main.AbsoluteSize.X / 2), 0, Main.AbsolutePosition.Y + (Main.AbsoluteSize.Y / 2))
+    		}):Play()
+        end)
         wait(1)
         ScreenGui:Destroy()
     end)
@@ -439,9 +445,11 @@ function Kavo.CreateLib(kavName, themeList)
         local function UpdateSize()
             local cS = pageListing.AbsoluteContentSize
 
-            game.TweenService:Create(page, TweenInfo.new(0.15, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                CanvasSize = UDim2.new(0,cS.X,0,cS.Y)
-            }):Play()
+            pcall(function()
+                game.TweenService:Create(page, TweenInfo.new(0.15, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                    CanvasSize = UDim2.new(0,cS.X,0,cS.Y)
+                }):Play()
+            end)
         end
 
         page.Name = "Page"
@@ -780,17 +788,21 @@ function Kavo.CreateLib(kavName, themeList)
                 local hovering = false
                 btn.MouseEnter:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
+                            }):Play()
+                        end)
                         hovering = true
                     end
                 end)
                 btn.MouseLeave:Connect(function()
                     if not focusing then 
-                        game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = themeList.ElementColor
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = themeList.ElementColor
+                            }):Play()
+                        end)
                         hovering = false
                     end
                 end)
@@ -960,18 +972,22 @@ function Kavo.CreateLib(kavName, themeList)
                 local hovering = false
                 btn.MouseEnter:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
+                            }):Play()
+                        end)
                         hovering = true
                     end 
                 end)
 
                 btn.MouseLeave:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = themeList.ElementColor
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = themeList.ElementColor
+                            }):Play()
+                        end)
                         hovering = false
                     end
                 end)
@@ -1155,9 +1171,11 @@ function Kavo.CreateLib(kavName, themeList)
                     btn.MouseButton1Click:Connect(function()
                         if not focusing then
                             if toggled == false then
-                                game.TweenService:Create(img, TweenInfo.new(0.11, Enum.EasingStyle.Linear,Enum.EasingDirection.In), {
-                                    ImageTransparency = 0
-                                }):Play()
+                                pcall(function()
+                                    game.TweenService:Create(img, TweenInfo.new(0.11, Enum.EasingStyle.Linear,Enum.EasingDirection.In), {
+                                        ImageTransparency = 0
+                                    }):Play()
+                                end)
                                 local c = sample:Clone()
                                 c.Parent = btn
                                 local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
@@ -1175,9 +1193,11 @@ function Kavo.CreateLib(kavName, themeList)
                                 end
                                 c:Destroy()
                             else
-                                game.TweenService:Create(img, TweenInfo.new(0.11, Enum.EasingStyle.Linear,Enum.EasingDirection.In), {
-                                    ImageTransparency = 1
-                                }):Play()
+                                pcall(function()
+                                    game.TweenService:Create(img, TweenInfo.new(0.11, Enum.EasingStyle.Linear,Enum.EasingDirection.In), {
+                                        ImageTransparency = 1
+                                    }):Play()
+                                end)
                                 local c = sample:Clone()
                                 c.Parent = btn
                                 local _ip = getInputPos(); local x, y = (_ip.X - c.AbsolutePosition.X), (_ip.Y - c.AbsolutePosition.Y)
@@ -1208,17 +1228,21 @@ function Kavo.CreateLib(kavName, themeList)
                     local hovering = false
                     btn.MouseEnter:Connect(function()
                         if not focusing then
-                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                                BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
-                            }):Play()
+                            pcall(function()
+                                game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                    BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
+                                }):Play()
+                            end)
                             hovering = true
                         end 
                     end)
                     btn.MouseLeave:Connect(function()
                         if not focusing then
-                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                                BackgroundColor3 = themeList.ElementColor
-                            }):Play()
+                            pcall(function()
+                                game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                    BackgroundColor3 = themeList.ElementColor
+                                }):Play()
+                            end)
                             hovering = false
                         end
                     end)
@@ -1264,15 +1288,19 @@ function Kavo.CreateLib(kavName, themeList)
                         end
                         if isTogOn then
                             toggled = true
-                            game.TweenService:Create(img, TweenInfo.new(0.11, Enum.EasingStyle.Linear,Enum.EasingDirection.In), {
-                                ImageTransparency = 0
-                            }):Play()
+                            pcall(function()
+                                game.TweenService:Create(img, TweenInfo.new(0.11, Enum.EasingStyle.Linear,Enum.EasingDirection.In), {
+                                    ImageTransparency = 0
+                                }):Play()
+                            end)
                             pcall(callback, toggled)
                         else
                             toggled = false
-                            game.TweenService:Create(img, TweenInfo.new(0.11, Enum.EasingStyle.Linear,Enum.EasingDirection.In), {
-                                ImageTransparency = 1
-                            }):Play()
+                            pcall(function()
+                                game.TweenService:Create(img, TweenInfo.new(0.11, Enum.EasingStyle.Linear,Enum.EasingDirection.In), {
+                                    ImageTransparency = 1
+                                }):Play()
+                            end)
                             pcall(callback, toggled)
                         end
                     end
@@ -1428,17 +1456,21 @@ function Kavo.CreateLib(kavName, themeList)
                 local hovering = false
                 btn.MouseEnter:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
+                            }):Play()
+                        end)
                         hovering = true
                     end 
                 end)
                 btn.MouseLeave:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = themeList.ElementColor
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = themeList.ElementColor
+                            }):Play()
+                        end)
                         hovering = false
                     end
                 end)        
@@ -1462,9 +1494,11 @@ function Kavo.CreateLib(kavName, themeList)
                 local Value
                 sliderBtn.MouseButton1Down:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            TextTransparency = 0
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                TextTransparency = 0
+                            }):Play()
+                        end)
                         Value = math.floor((((tonumber(maxvalue) - tonumber(minvalue)) / 149) * sliderDrag.AbsoluteSize.X) + tonumber(minvalue)) or 0
                         pcall(function()
                             callback(Value)
@@ -1485,9 +1519,11 @@ function Kavo.CreateLib(kavName, themeList)
                                     callback(Value)
                                 end)
                                 val.Text = Value
-                                game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                                    TextTransparency = 1
-                                }):Play()
+                                pcall(function()
+                                    game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                        TextTransparency = 1
+                                    }):Play()
+                                end)
                                 sliderDrag:TweenSize(UDim2.new(0, math.clamp(mouse.X - sliderDrag.AbsolutePosition.X, 0, 149), 0, 6), "InOut", "Linear", 0.05, true)
                                 moveconnection:Disconnect()
                                 releaseconnection:Disconnect()
@@ -1506,9 +1542,11 @@ function Kavo.CreateLib(kavName, themeList)
                 sliderBtn.InputBegan:Connect(function(inp)
                     if inp.UserInputType == Enum.UserInputType.Touch then
                         if not focusing then
-                            game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                                TextTransparency = 0
-                            }):Play()
+                            pcall(function()
+                                game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                    TextTransparency = 0
+                                }):Play()
+                            end)
                             local touchMoveConn, touchEndConn
                             local function updateSliderFromTouch(touchInput)
                                 local relativeX = math.clamp(touchInput.Position.X - sliderBtn.AbsolutePosition.X, 0, 149)
@@ -1527,9 +1565,11 @@ function Kavo.CreateLib(kavName, themeList)
                             end)
                             touchEndConn = uis.InputEnded:Connect(function(endInp)
                                 if endInp == inp then
-                                    game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                                        TextTransparency = 1
-                                    }):Play()
+                                    pcall(function()
+                                        game.TweenService:Create(val, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                            TextTransparency = 1
+                                        }):Play()
+                                    end)
                                     touchMoveConn:Disconnect()
                                     touchEndConn:Disconnect()
                                 end
@@ -1743,17 +1783,21 @@ function Kavo.CreateLib(kavName, themeList)
                 local hovering = false
                 btn.MouseEnter:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
+                            }):Play()
+                        end)
                         hovering = true
                     end 
                 end)
                 btn.MouseLeave:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = themeList.ElementColor
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = themeList.ElementColor
+                            }):Play()
+                        end)
                         hovering = false
                     end
                 end)        
@@ -1870,17 +1914,21 @@ function Kavo.CreateLib(kavName, themeList)
                     local oHover = false
                     optionSelect.MouseEnter:Connect(function()
                         if not focusing then
-                            game.TweenService:Create(optionSelect, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                                BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
-                            }):Play()
+                            pcall(function()
+                                game.TweenService:Create(optionSelect, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                    BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
+                                }):Play()
+                            end)
                             oHover = true
                         end 
                     end)
                     optionSelect.MouseLeave:Connect(function()
                         if not focusing then
-                            game.TweenService:Create(optionSelect, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                                BackgroundColor3 = themeList.ElementColor
-                            }):Play()
+                            pcall(function()
+                                game.TweenService:Create(optionSelect, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                    BackgroundColor3 = themeList.ElementColor
+                                }):Play()
+                            end)
                             oHover = false
                         end
                     end)   
@@ -1969,17 +2017,21 @@ function Kavo.CreateLib(kavName, themeList)
                         local hov = false
                         optionSelect.MouseEnter:Connect(function()
                             if not focusing then
-                                game.TweenService:Create(optionSelect, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                                    BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
-                                }):Play()
+                                pcall(function()
+                                    game.TweenService:Create(optionSelect, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                        BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
+                                    }):Play()
+                                end)
                                 hov = true
                             end 
                         end)
                         optionSelect.MouseLeave:Connect(function()
                             if not focusing then
-                                game.TweenService:Create(optionSelect, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                                    BackgroundColor3 = themeList.ElementColor
-                                }):Play()
+                                pcall(function()
+                                    game.TweenService:Create(optionSelect, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                        BackgroundColor3 = themeList.ElementColor
+                                    }):Play()
+                                end)
                                 hov = false
                             end
                         end)   
@@ -2156,17 +2208,21 @@ function Kavo.CreateLib(kavName, themeList)
                 local oHover = false
                 keybindElement.MouseEnter:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(keybindElement, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(keybindElement, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
+                            }):Play()
+                        end)
                         oHover = true
                     end 
                 end)
                 keybindElement.MouseLeave:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(keybindElement, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = themeList.ElementColor
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(keybindElement, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = themeList.ElementColor
+                            }):Play()
+                        end)
                         oHover = false
                     end
                 end)        
@@ -2545,17 +2601,21 @@ function Kavo.CreateLib(kavName, themeList)
 
                 colorElement.MouseEnter:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(colorElement, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(colorElement, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = Color3.fromRGB(themeList.ElementColor.r * 255 + 8, themeList.ElementColor.g * 255 + 9, themeList.ElementColor.b * 255 + 10)
+                            }):Play()
+                        end)
                         hovering = true
                     end 
                 end)
                 colorElement.MouseLeave:Connect(function()
                     if not focusing then
-                        game.TweenService:Create(colorElement, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-                            BackgroundColor3 = themeList.ElementColor
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(colorElement, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
+                                BackgroundColor3 = themeList.ElementColor
+                            }):Play()
+                        end)
                         hovering = false
                     end
                 end)        
@@ -2663,15 +2723,19 @@ function Kavo.CreateLib(kavName, themeList)
                 end
                 local function togglerainbow()
                     if rainbow then
-                        game.TweenService:Create(toggleEnabled, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), {
-                            ImageTransparency = 1
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(toggleEnabled, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), {
+                                ImageTransparency = 1
+                            }):Play()
+                        end)
                         rainbow = false
                         rainbowconnection:Disconnect()
                     else
-                        game.TweenService:Create(toggleEnabled, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), {
-                            ImageTransparency = 0
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(toggleEnabled, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), {
+                                ImageTransparency = 0
+                            }):Play()
+                        end)
                         rainbow = true
                         rainbowconnection = rs.RenderStepped:Connect(function()
                             setrgbcolor({zigzag(counter),1,1})
@@ -2797,10 +2861,12 @@ function Kavo.CreateLib(kavName, themeList)
                 Sample.ImageColor3         = themeList.SchemeColor
                 Sample.ImageTransparency   = 0.6
 
-                -- â”€â”€ Popup overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                local overlay = Instance.new("Frame")
+                -- ── Popup overlay ──────────────────────────────────────────
+                local overlay = Instance.new("TextButton")
                 overlay.Name               = "DialogOverlay"
-                overlay.Parent             = Main
+                overlay.Text               = ""
+                overlay.AutoButtonColor    = false
+                overlay.Parent             = ScreenGui
                 overlay.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
                 overlay.BackgroundTransparency = 0.45
                 overlay.BorderSizePixel    = 0
@@ -2894,26 +2960,32 @@ function Kavo.CreateLib(kavName, themeList)
 
                     -- Hover
                     choiceBtn.MouseEnter:Connect(function()
-                        game.TweenService:Create(choiceBtn, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {
-                            BackgroundColor3 = Color3.fromRGB(
-                                themeList.ElementColor.r * 255 + 12,
-                                themeList.ElementColor.g * 255 + 12,
-                                themeList.ElementColor.b * 255 + 12
-                            )
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(choiceBtn, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {
+                                BackgroundColor3 = Color3.fromRGB(
+                                    themeList.ElementColor.r * 255 + 12,
+                                    themeList.ElementColor.g * 255 + 12,
+                                    themeList.ElementColor.b * 255 + 12
+                                )
+                            }):Play()
+                        end)
                     end)
                     choiceBtn.MouseLeave:Connect(function()
-                        game.TweenService:Create(choiceBtn, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {
-                            BackgroundColor3 = themeList.ElementColor
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(choiceBtn, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {
+                                BackgroundColor3 = themeList.ElementColor
+                            }):Play()
+                        end)
                     end)
 
                     choiceBtn.MouseButton1Click:Connect(function()
                         -- Close popup
-                        game.TweenService:Create(popup, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                            Size = UDim2.new(0, 0, 0, 0),
-                            Position = UDim2.new(0.5, 0, 0.5, 0)
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(popup, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                                Size = UDim2.new(0, 0, 0, 0),
+                                Position = UDim2.new(0.5, 0, 0.5, 0)
+                            }):Play()
+                        end)
                         wait(0.15)
                         overlay.Visible = false
                         popup.Size     = UDim2.new(0, 260, 0, 90 + (#choices * 38))
@@ -2943,20 +3015,37 @@ function Kavo.CreateLib(kavName, themeList)
                     end
                 end)()
 
-                -- Clicking outside the popup closes it
-                overlay.MouseButton1Click:Connect(function()
-                    game.TweenService:Create(popup, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                        Size = UDim2.new(0, 0, 0, 0),
-                        Position = UDim2.new(0.5, 0, 0.5, 0)
-                    }):Play()
+                -- Clicking outside the popup closes it (mouse + touch)
+                local function closeDialog()
+                    pcall(function()
+                        game.TweenService:Create(popup, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                            Size = UDim2.new(0, 0, 0, 0),
+                            Position = UDim2.new(0.5, 0, 0.5, 0)
+                        }):Play()
+                    end)
                     wait(0.15)
                     overlay.Visible = false
                     popup.Size     = UDim2.new(0, 260, 0, 90 + (#choices * 38))
                     popup.Position = UDim2.new(0.5, 0, 0.5, 0)
+                end
+                overlay.MouseButton1Click:Connect(closeDialog)
+                overlay.InputBegan:Connect(function(inp)
+                    if inp.UserInputType == Enum.UserInputType.Touch then
+                        -- Only close if touch is outside popup
+                        local px = popup.AbsolutePosition.X
+                        local py = popup.AbsolutePosition.Y
+                        local pw = popup.AbsoluteSize.X
+                        local ph = popup.AbsoluteSize.Y
+                        local tx = inp.Position.X
+                        local ty = inp.Position.Y
+                        if tx < px or tx > px + pw or ty < py or ty > py + ph then
+                            closeDialog()
+                        end
+                    end
                 end)
 
-                -- Trigger button click â†’ open popup
-                buttonElement.MouseButton1Click:Connect(function()
+                -- Trigger button click → open popup (mouse + touch)
+                local function openDialog()
                     if not focusing then
                         local c = Sample:Clone()
                         c.Parent = buttonElement
@@ -2975,9 +3064,17 @@ function Kavo.CreateLib(kavName, themeList)
                         overlay.Visible = true
                         popup.Size     = UDim2.new(0, 0, 0, 0)
                         popup.Position = UDim2.new(0.5, 0, 0.5, 0)
-                        game.TweenService:Create(popup, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(0, 260, 0, 90 + (#choices * 38))
-                        }):Play()
+                        pcall(function()
+                            game.TweenService:Create(popup, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                                Size = UDim2.new(0, 260, 0, 90 + (#choices * 38))
+                            }):Play()
+                        end)
+                    end
+                end
+                buttonElement.MouseButton1Click:Connect(openDialog)
+                buttonElement.InputBegan:Connect(function(inp)
+                    if inp.UserInputType == Enum.UserInputType.Touch then
+                        openDialog()
                     end
                 end)
 
