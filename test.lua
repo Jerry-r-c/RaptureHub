@@ -1,3 +1,22 @@
+--[[
+    EnvLogger v1.0
+    Dumps what obfuscated scripts actually DO at runtime.
+    
+    USAGE:
+        loadstring(game:HttpGet("YOUR_RAW_URL"))()
+        
+        -- paste obfuscated script below this line
+        local result = workspace:FindFirstChild("Part")
+        ...
+    
+    OUTPUT:
+        A file called "envlog_TIMESTAMP.lua" in your executor workspace folder.
+        Also prints to console in real time.
+]]
+
+-- ============================================================
+--  CONFIGURATION
+-- ============================================================
 local CONFIG = {
     outputFile    = true,           -- write results to file
     outputConsole = true,           -- print to executor console
@@ -35,7 +54,7 @@ local rawmatch    = string.match
 local rawrep      = string.rep
 local rawconcat   = table.concat
 local rawinsert   = table.insert
-local rawlen      = rawlen or function(t) return #t end
+local rawlen      = (function() local ok, v = rawpcall(function() return rawlen end) return (ok and v) or function(t) local ok2, n = rawpcall(function() return #t end) return ok2 and n or 0 end end)()
 
 -- safe write: never errors
 local function safeWrite(line)
@@ -508,29 +527,26 @@ local function buildEnv(baseEnv)
 
     -- Hook game/workspace via __index metamethod
     if CONFIG.hookGame then
-        rawpcall(function()
-            local mt  = rawgetmt(game)
+        if hookmetamethod then
             local oir
-
-            -- try hookmetamethod if available (executor API)
-            if hookmetamethod then
-                oir = hookmetamethod(game, "__index", newcclosure and newcclosure(function(self, key)
-                    local val = oir(self, key)
-                    if type(val) == "function" then
-                        return makeHook(rawtostring(self) .. ":" .. rawtostring(key), val)
-                    end
-                    safeWrite(rawformat("-- __index game.%s --> %s", rawtostring(key), fmt(val)))
-                    return val
-                end) or function(self, key)
-                    local val = oir(self, key)
-                    if type(val) == "function" then
-                        return makeHook(rawtostring(self) .. ":" .. rawtostring(key), val)
-                    end
-                    safeWrite(rawformat("-- __index game.%s --> %s", rawtostring(key), fmt(val)))
-                    return val
-                end)
+            local handler = function(self, key)
+                local val = oir(self, key)
+                if type(val) == "function" then
+                    return makeHook(rawtostring(self) .. "." .. rawtostring(key), val)
+                end
+                safeWrite(rawformat("-- game.%s --> %s", rawtostring(key), fmt(val)))
+                return val
             end
-        end)
+            local ok2, err2 = rawpcall(function()
+                oir = hookmetamethod(game, "__index",
+                    newcclosure and newcclosure(handler) or handler)
+            end)
+            if not ok2 then
+                safeWrite("-- [EnvLogger] hookmetamethod failed: " .. rawtostring(err2))
+            end
+        else
+            safeWrite("-- [EnvLogger] hookmetamethod not available on this executor")
+        end
     end
 
     -- pcall / xpcall wrappers that still log errors
@@ -594,11 +610,17 @@ local function flush()
     local body = header .. rawconcat(Lines, "\n")
 
     if CONFIG.outputFile then
-        rawpcall(function()
+        local ok2, ferr = rawpcall(function()
             local filename = rawformat("envlog_%d.lua", math.floor(tick()))
             writefile(filename, body)
             print("[EnvLogger] Saved to: " .. filename)
         end)
+        if not ok2 then
+            print("[EnvLogger] writefile failed (" .. rawtostring(ferr) .. "), printing full log to console:")
+            for _, line in rawipairs(Lines) do
+                print(line)
+            end
+        end
     end
 
     return body
@@ -634,13 +656,27 @@ function EnvLogger.run(source)
     end
 
     -- 4. Set environment
+    -- Try setfenv, but also patch _G directly so upvalue-based obfuscators see hooks
     rawpcall(setfenv, fn, env)
+    for k, v in rawpairs(env) do
+        rawpcall(function() _G[k] = v end)
+    end
 
     -- 5. Run with error capture
+    -- Pass the standard varargs obfuscated scripts expect:
+    -- setmetatable, newproxy, {...}, unpack, getmetatable, _ENV/getfenv(), select
     safeWrite("-- [EnvLogger] Running script...")
     safeWrite("-- =============================================")
 
-    local ok, runErr = rawpcall(fn)
+    local ok, runErr = rawpcall(fn,
+        setmetatable,
+        newproxy,
+        {},
+        table.unpack or unpack,
+        getmetatable,
+        getfenv and getfenv() or _ENV,
+        select
+    )
 
     safeWrite("-- =============================================")
     if ok then
@@ -679,3 +715,7 @@ end
 -- Also expose a direct API for explicit usage:
 --   __envlogger.run(source_string)
 _G.__envlogger = EnvLogger
+
+print("[EnvLogger] Loaded. Paste your obfuscated script below, or use:")
+print("  __envlogger.run(source)")
+print("  loadstring(game:HttpGet('YOUR_SCRIPT_URL'))()")
