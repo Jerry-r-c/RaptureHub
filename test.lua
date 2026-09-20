@@ -637,35 +637,103 @@ function EnvLogger.run(source)
     safeWrite(rawformat("-- [EnvLogger] Source length: %d bytes", #source))
     safeWrite("-- =============================================")
 
-    -- 1. Transform source to inject local-variable tracing
-    local transformed = Instrument.transform(source)
+    -- Track hooked functions so we don't double-hook
+    local hookedFns = {}
 
-    -- 2. Build sandboxed environment on top of the real _G
-    local env = buildEnv(_G)
+    -- Hook any function we find, recursively crawling upvalues
+    local function deepHook(fn, name, depth)
+        depth = depth or 0
+        if depth > 5 then return end
+        if type(fn) ~= "function" then return end
+        if hookedFns[fn] then return end
+        hookedFns[fn] = true
 
-    -- 3. Compile
-    local fn, err = loadstring(transformed)
-    if not fn then
-        -- Compilation failed on transformed; try original
-        fn, err = loadstring(source)
-        if not fn then
-            safeWrite("-- [EnvLogger] COMPILE ERROR: " .. rawtostring(err))
-            flush()
-            return
+        -- Crawl upvalues looking for interesting functions
+        local ok2, ups = rawpcall(getupvalues, fn)
+        if ok2 and type(ups) == "table" then
+            for k, v in rawpairs(ups) do
+                if type(v) == "function" and not hookedFns[v] then
+                    local upname = name .. ".up[" .. rawtostring(k) .. "]"
+                    deepHook(v, upname, depth + 1)
+                end
+            end
         end
-        safeWrite("-- [EnvLogger] Transform failed compile, running original")
     end
 
-    -- 4. Set environment
-    -- Try setfenv, but also patch _G directly so upvalue-based obfuscators see hooks
-    rawpcall(setfenv, fn, env)
-    for k, v in rawpairs(env) do
-        rawpcall(function() _G[k] = v end)
+    -- Hook key globals at _G level so VM picks them up via getfenv
+    local globalsToHook = {
+        "print", "warn", "require", "loadstring",
+        "HttpGet", "HttpPost",
+        "game", "workspace",
+    }
+
+    -- Patch functions the WeAreDevs VM will call
+    local origPrint = rawpcall and print
+    _G.print = function(...)
+        local args = fmtArgs(...)
+        safeWrite(rawformat("print(%s)", args))
+        return origPrint(...)
     end
 
-    -- 5. Run with error capture
-    -- Pass the standard varargs obfuscated scripts expect:
-    -- setmetatable, newproxy, {...}, unpack, getmetatable, _ENV/getfenv(), select
+    local origWarn = warn
+    _G.warn = function(...)
+        local args = fmtArgs(...)
+        safeWrite(rawformat("warn(%s)", args))
+        return origWarn(...)
+    end
+
+    local origLoadstring = loadstring
+    _G.loadstring = function(src, name2)
+        safeWrite(rawformat("loadstring(%q) -- %d bytes", rawtostring(name2 or "?"), #rawtostring(src)))
+        -- recursively log the inner script too
+        task.defer(function()
+            EnvLogger.run(rawtostring(src))
+        end)
+        return origLoadstring(src, name2)
+    end
+
+    -- Hook game:HttpGet and game:HttpPostAsync via hookmetamethod
+    local origIndex
+    local ok3, err3 = rawpcall(function()
+        origIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
+            local val = origIndex(self, key)
+            if type(val) == "function" then
+                local hooked = newcclosure(function(s, ...)
+                    local args = fmtArgs(...)
+                    local results = table.pack(rawpcall(val, s, ...))
+                    if results[1] then
+                        local retStr = fmtArgs(table.unpack(results, 2, results.n))
+                        safeWrite(rawformat("game:%s(%s) --> %s", rawtostring(key), args, retStr))
+                        return table.unpack(results, 2, results.n)
+                    else
+                        safeWrite(rawformat("-- ERROR game:%s(%s): %s", rawtostring(key), args, rawtostring(results[2])))
+                        error(results[2], 2)
+                    end
+                end)
+                return hooked
+            end
+            safeWrite(rawformat("game.%s --> %s", rawtostring(key), fmt(val)))
+            return val
+        end))
+    end)
+    if not ok3 then
+        safeWrite("-- [EnvLogger] hookmetamethod failed: " .. rawtostring(err3))
+    end
+
+    -- Compile original source (no transform, obfuscated = opaque)
+    local fn, err = loadstring(source)
+    if not fn then
+        safeWrite("-- [EnvLogger] COMPILE ERROR: " .. rawtostring(err))
+        flush()
+        return
+    end
+
+    -- Crawl the compiled chunk's upvalues and hook what we find
+    deepHook(fn, "chunk")
+
+    -- Set environment
+    rawpcall(setfenv, fn, getfenv())
+
     safeWrite("-- [EnvLogger] Running script...")
     safeWrite("-- =============================================")
 
@@ -675,7 +743,7 @@ function EnvLogger.run(source)
         {},
         table.unpack or unpack,
         getmetatable,
-        getfenv and getfenv() or _ENV,
+        getfenv(),
         select
     )
 
@@ -685,6 +753,11 @@ function EnvLogger.run(source)
     else
         safeWrite("-- [EnvLogger] Runtime error: " .. rawtostring(runErr))
     end
+
+    -- Restore globals
+    rawpcall(function() _G.print = origPrint end)
+    rawpcall(function() _G.warn = origWarn end)
+    rawpcall(function() _G.loadstring = origLoadstring end)
 
     flush()
 end
