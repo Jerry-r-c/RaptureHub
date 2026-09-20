@@ -61,10 +61,6 @@ local function safeWrite(line)
     lineCount = lineCount + 1
     local entry = rawformat("[%05d] %s", lineCount, rawtostring(line))
     rawinsert(Lines, entry)
-    if CONFIG.outputConsole then
-        local ok = rawpcall(print, entry)
-        if not ok then rawpcall(warn, entry) end
-    end
 end
 
 -- ============================================================
@@ -474,15 +470,29 @@ local function buildEnv(baseEnv)
         local globalsToHook = {
             "warn", "error", "assert",
             "loadstring", "require",
-            "setfenv", "getfenv",
             "collectgarbage", "gcinfo",
-            "newproxy",
+            "newproxy", "setfenv",
         }
         for _, name in rawipairs(globalsToHook) do
             local orig = env[name] or _G[name]
             if orig then
                 env[name] = makeHook(name, orig)
             end
+        end
+
+        -- hook getfenv specially: when obfuscated script calls getfenv()
+        -- inject our hooks into whatever env it returns
+        local origGetfenv = getfenv
+        env.getfenv = function(n)
+            local e2 = origGetfenv(n or 1)
+            if type(e2) == "table" then
+                -- inject key hooks into the returned env
+                e2.print   = makeHook("print", rawpcall and print or e2.print)
+                e2.warn    = makeHook("warn", e2.warn or warn)
+                e2.require = e2.require and makeHook("require", e2.require)
+                e2.loadstring = e2.loadstring and makeHook("loadstring", e2.loadstring)
+            end
+            return e2
         end
     end
 
@@ -609,19 +619,10 @@ local function flush()
 
     local body = header .. rawconcat(Lines, "\n")
 
-    if CONFIG.outputFile then
-        local ok2, ferr = rawpcall(function()
-            local filename = rawformat("envlog_%d.lua", math.floor(tick()))
-            writefile(filename, body)
-            print("[EnvLogger] Saved to: " .. filename)
-        end)
-        if not ok2 then
-            print("[EnvLogger] writefile failed (" .. rawtostring(ferr) .. "), printing full log to console:")
-            for _, line in rawipairs(Lines) do
-                print(line)
-            end
-        end
-    end
+    -- always copy to clipboard
+    rawpcall(setclipboard, body)
+    rawpcall(writefile, rawformat("envlog_%d.lua", math.floor(tick())), body)
+    print("[EnvLogger] Done! " .. #Lines .. " lines captured. Output copied to clipboard.")
 
     return body
 end
